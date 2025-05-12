@@ -51,34 +51,41 @@ function respondError(res, status, message) {
 // });
 
 // Helper function to initiate a Twilio call to the agent and set up bridging to the contact
+// Helper function to initiate a Twilio call to the agent and set up bridging to the contact
 async function initiateCall(contactId, useMobile, res) {
   try {
-    // Fetch contact details from HubSpot (phone, mobile, and ownerId)
+    // Fetch contact details from HubSpot (phone, mobile, ownerId, and assigned_agent_name)
     const hubspotResp = await axios.get(`https://api.hubapi.com/crm/v3/objects/contacts/${contactId}`, {
-      params: { properties: 'phone,mobilephone,hubspot_owner_id' },
+      params: { properties: 'phone,mobilephone,hubspot_owner_id,assigned_agent_name' },
       headers: { Authorization: `Bearer ${HUBSPOT_PRIVATE_APP_TOKEN}` }
     });
+    
     const contact = hubspotResp.data;
     if (!contact || !contact.properties) {
       return respondError(res, 404, 'Contact not found in HubSpot');
     }
+
     const phoneNumber = useMobile ? contact.properties.mobilephone : contact.properties.phone;
     const ownerId = contact.properties.hubspot_owner_id;
+    const assignedAgentName = contact.properties.assigned_agent_name;
+
     // Validate that the required phone number exists
     if (!phoneNumber) {
       return respondError(res, 400, `Contact does not have a ${useMobile ? 'mobile phone' : 'phone'} number`);
     }
-    // Validate that the contact has an owner and that owner is authorized
-    if (!ownerId) {
-      return respondError(res, 400, 'Contact has no owner assigned');
-    }
-    const agentNumber = agentPhoneMap[ownerId];
+
+    // Validate that the contact has an assigned agent
+    const agentNumber = agentPhoneMap[assignedAgentName] || agentPhoneMap[ownerId];
     if (!agentNumber) {
-      return respondError(res, 403, 'Call blocked: Contact owner is not configured for calling');
+      return respondError(res, 403, `Call blocked: Agent ${assignedAgentName || ownerId} is not configured for calling`);
     }
 
-    // Construct TwiML URL with query params for contact and owner (for use in the TwiML generation step)
+    // Construct TwiML URL with query params for contact and agent (for use in the TwiML generation step)
     const twimlUrl = `${BASE_URL}/connect-call?contactId=${contactId}&ownerId=${ownerId}&to=${encodeURIComponent(phoneNumber)}`;
+    
+    // **Add this console log to check the generated TwiML URL**
+    console.log("Generated TwiML URL:", twimlUrl);
+    
     // Initiate the call via Twilio (calls the agent first)
     await twilioClient.calls.create({
       from: TWILIO_NUMBER,
@@ -86,6 +93,7 @@ async function initiateCall(contactId, useMobile, res) {
       url: twimlUrl,
       method: 'GET'  // Twilio will GET the TwiML instructions once the agent picks up
     });
+
     return res.status(200).json({ message: 'Call initiated successfully' });
   } catch (err) {
     // Handle errors from HubSpot API or Twilio API
@@ -98,6 +106,7 @@ async function initiateCall(contactId, useMobile, res) {
     }
   }
 }
+
 
 // POST route to initiate a PHONE CALL (to contact's phone number)
 app.post('/start-phone-call', async (req, res) => {
