@@ -29,7 +29,7 @@ const App = () => (
 
 const validatePhoneNumber = (phone) => /^\+?[1-9]\d{1,14}$/.test(phone);
 
-const apiBase = 'https://twilio-sooty.vercel.app/api';
+const apiBase = 'https://twilio-gbq8.vercel.app/api';
 
 function useFetchConfig() {
   const [data, setData] = React.useState({ twilioNumbers: [], agents: [], agentConfigs: [] });
