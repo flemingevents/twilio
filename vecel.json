@@ -1,14 +1,20 @@
 {
-  "version": 2,
-  "functions": {
-    "backend/server.js": {
-      "runtime": "nodejs16.x",
-      "maxDuration": 60
+  "builds": [
+    {
+      "src": "api/server.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "frontend/dist"
+      }
     }
-  },
+  ],
   "routes": [
-    { "src": "/api/(.*)", "dest": "/backend/server.js" },
-    { "src": "/(.*)",     "dest": "/frontend/$1" }
+    { "src": "/api/(.*)", "dest": "/api/server.js" },
+    { "src": "/(.*)", "dest": "/frontend/dist/$1" }
   ]
 }
 
