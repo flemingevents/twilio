@@ -5,6 +5,8 @@ const axios = require('axios');
 const twilio = require('twilio');
 const fs = require('fs');
 const cors = require('cors');
+const path = require('path');
+
 
 const AccessToken = twilio.jwt.AccessToken;
 const VoiceGrant = AccessToken.VoiceGrant;
@@ -17,7 +19,7 @@ app.use(express.urlencoded({ extended: true }));
 const { HUBSPOT_PRIVATE_APP_TOKEN, BASE_URL, TWIML_APP_SID } = process.env;
 
 function getData() {
-  return JSON.parse(fs.readFileSync('./data.json', 'utf-8'));
+  return JSON.parse(fs.readFileSync(path.join(__dirname, 'data.json'), 'utf-8'));
 }
 
 function respondError(res, status, message) {
