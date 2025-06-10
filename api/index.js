@@ -196,4 +196,4 @@ app.post('/config/all', (req, res) => {
   res.json({ success: true });
 });
 
-app.listen(3001, () => console.log('✅ Backend running at http://localhost:3001'));
+module.exports = app;
