@@ -198,4 +198,5 @@ app.post('/config/all', (req, res) => {
   res.json({ success: true });
 });
 
-module.exports = app;
+const serverless = require('serverless-http');
+module.exports = serverless(app);
