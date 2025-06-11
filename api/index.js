@@ -197,6 +197,4 @@ app.post('/config/all', (req, res) => {
   fs.writeFileSync('./data.json', JSON.stringify(data, null, 2));
   res.json({ success: true });
 });
-
-const serverless = require('serverless-http');
-module.exports = serverless(app);
+module.exports = app;
