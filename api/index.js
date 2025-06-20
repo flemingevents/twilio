@@ -7,6 +7,13 @@ const fs = require('fs');
 const cors = require('cors');
 const path = require('path');
 
+const { createClient } = require('@supabase/supabase-js');
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
+
 
 const AccessToken = twilio.jwt.AccessToken;
 const VoiceGrant = AccessToken.VoiceGrant;
@@ -18,9 +25,20 @@ app.use(express.urlencoded({ extended: true }));
 
 const { HUBSPOT_PRIVATE_APP_TOKEN, BASE_URL, TWIML_APP_SID } = process.env;
 
-function getData() {
-  return JSON.parse(fs.readFileSync(path.join(__dirname, 'data.json'), 'utf-8'));
+async function getData() {
+  const [twilioRes, agentsRes, configsRes] = await Promise.all([
+    supabase.from('twilio_numbers').select('*'),
+    supabase.from('agents').select('*'),
+    supabase.from('agent_configs').select('*')
+  ]);
+
+  return {
+    twilioNumbers: twilioRes.data || [],
+    agents: agentsRes.data || [],
+    agentConfigs: configsRes.data || []
+  };
 }
+
 
 function respondError(res, status, message) {
   return res.status(status).json({ error: message });
@@ -188,15 +206,42 @@ app.post('/recording-callback', async (req, res) => {
 });
 
 // Frontend config endpoints
-app.get('/config/all', (req, res) => {
-  res.json(getData());
+// ✅ Read all
+app.get('/config/all', async (req, res) => {
+  try {
+    const data = await getData();
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch data' });
+  }
 });
 
-app.post('/config/all', (req, res) => {
-  const data = { ...getData(), ...req.body };
-  fs.writeFileSync('./data.json', JSON.stringify(data, null, 2));
-  res.json({ success: true });
+// ✅ Overwrite all
+app.post('/config/all', async (req, res) => {
+  const incoming = req.body;
+
+  try {
+    // Clear and repopulate each table
+    if (incoming.twilioNumbers) {
+      await supabase.from('twilio_numbers').delete().neq('id', -1);
+      await supabase.from('twilio_numbers').insert(incoming.twilioNumbers);
+    }
+
+    if (incoming.agents) {
+      await supabase.from('agents').delete().neq('id', -1);
+      await supabase.from('agents').insert(incoming.agents);
+    }
+
+    if (incoming.agentConfigs) {
+      await supabase.from('agent_configs').delete().neq('id', -1);
+      await supabase.from('agent_configs').insert(incoming.agentConfigs);
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('❌ Supabase write error:', err.message);
+    res.status(500).json({ error: 'Failed to update config' });
+  }
 });
 
-const serverless = require('serverless-http');
-module.exports = serverless(app);
+module.exports = app;
