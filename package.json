@@ -1,7 +1,8 @@
 {
   "name": "twilio-backend",
   "private": true,
-  "engines": {
-    "node": "20.x"
+  "engines": { "node": "20.x" },
+  "scripts": {
+    "build": "echo \"no build needed\""
   }
 }
