@@ -75,7 +75,7 @@ app.get('/token', async (req, res) => {
 });
 
 // Config endpoints: GET all
-app.get('/config/all', async (req, res) => {
+app.get('/api/config/all', async (req, res) => {
   try {
     const data = await getData();
     res.json(data);
@@ -86,7 +86,7 @@ app.get('/config/all', async (req, res) => {
 });
 
 // Config endpoints: POST replace
-app.post('/config/all', async (req, res) => {
+app.post('/api/config/all', async (req, res) => {
   const incoming = req.body;
   try {
     if (incoming.twilioNumbers) {
