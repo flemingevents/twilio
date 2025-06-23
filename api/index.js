@@ -8,25 +8,23 @@ const serverless = require('serverless-http');
 
 const app = express();
 
-// CORS for frontend domain
 app.use(cors({
   origin: 'https://twilio-hubspot.vercel.app',
   methods: ['GET', 'POST', 'OPTIONS', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type'],
-  credentials: true,
+  credentials: true
 }));
 
 app.options('*', cors());
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Supabase setup
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-// Utility: get all config
 async function getData() {
   const [twilioRes, agentsRes, configsRes] = await Promise.all([
     supabase.from('twilio_numbers').select('*'),
@@ -45,7 +43,7 @@ function respondError(res, status, message) {
   return res.status(status).json({ error: message });
 }
 
-// 🔐 Token (1-leg)
+// GET token
 app.get('/api/token', async (req, res) => {
   const agentName = req.query.agent;
   if (!agentName) return respondError(res, 400, 'Missing agent name');
@@ -67,18 +65,18 @@ app.get('/api/token', async (req, res) => {
   res.json({ identity: agentName, token: token.toJwt() });
 });
 
-// 📄 Config GET
+// GET config
 app.get('/api/config/all', async (req, res) => {
   try {
     const data = await getData();
     res.json(data);
   } catch (err) {
-    console.error('❌ Failed to fetch config:', err);
+    console.error(err);
     respondError(res, 500, 'Failed to fetch config');
   }
 });
 
-// 📝 Config POST (overwrite)
+// POST config
 app.post('/api/config/all', async (req, res) => {
   const incoming = req.body;
   try {
@@ -96,11 +94,10 @@ app.post('/api/config/all', async (req, res) => {
     }
     res.json({ success: true });
   } catch (err) {
-    console.error('❌ Supabase write error:', err);
+    console.error('❌ Supabase write error:', err.message);
     respondError(res, 500, 'Failed to update config');
   }
 });
 
-// ✅ Export handler for Vercel
 module.exports = app;
 module.exports.handler = serverless(app);
