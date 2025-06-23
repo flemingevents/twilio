@@ -7,6 +7,9 @@ const fs = require('fs');
 const cors = require('cors');
 const path = require('path');
 
+app.options('*', (req, res) => {
+  res.sendStatus(200);
+});
 
 app.use(cors({
   origin: 'https://twilio-hubspot.vercel.app', // your frontend URL
