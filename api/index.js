@@ -1,28 +1,27 @@
 require('dotenv').config();
 const express = require('express');
-const cors = require('cors');
-const serverless = require('serverless-http');
 const axios = require('axios');
 const twilio = require('twilio');
 const fs = require('fs');
+const cors = require('cors');
 const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
 
-const app = express();
+const app = express(); // ✅ define this FIRST
 
-// --- ✅ Middleware Setup ---
-
-// CORS: allow your Vercel frontend origin
+// ✅ CORS setup (replace with your frontend domain)
 app.use(cors({
   origin: 'https://twilio-hubspot.vercel.app',
-  methods: ['GET','POST','OPTIONS','DELETE','PUT','PATCH'],
+  methods: ['GET', 'POST', 'OPTIONS', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type'],
-  credentials: true,
+  credentials: true
 }));
-app.options('*', cors()); // handle preflight requests
+
+app.options('*', cors()); // preflight
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
 
 // Supabase client
 const supabase = createClient(
