@@ -7,6 +7,17 @@ const fs = require('fs');
 const cors = require('cors');
 const path = require('path');
 
+
+app.use(cors({
+  origin: 'https://twilio-hubspot.vercel.app', // your frontend URL
+  methods: ['GET','POST','OPTIONS','DELETE','PUT','PATCH'],
+  allowedHeaders: ['Content-Type'],
+  credentials: true
+}));
+
+// OR for testing, allow all origins:
+// app.use(cors());
+
 const { createClient } = require('@supabase/supabase-js');
 
 const supabase = createClient(
