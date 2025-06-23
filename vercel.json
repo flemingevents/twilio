@@ -2,6 +2,7 @@
   "version": 2,
   "headers": [
     {
+      "source": "/api/(.*)",
       "headers": [
         { "key": "Access-Control-Allow-Origin", "value": "https://twilio-hubspot.vercel.app" },
         { "key": "Access-Control-Allow-Methods", "value": "GET,POST,OPTIONS,PUT,PATCH,DELETE" },
@@ -12,6 +13,5 @@
   ],
   "builds": [
     { "src": "api/index.js", "use": "@vercel/node" }
-  ],
-  "routes": [{ "src": "/(.*)", "dest": "/api/index.js" }]
+  ]
 }
